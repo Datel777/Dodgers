@@ -1,5 +1,4 @@
-#Umlet
-*.uxf
+*.user
+.idea
+cmake-build-*
 
-#Shell
-*.sh
