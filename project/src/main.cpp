@@ -2,7 +2,7 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
-//#include "glm/..."
+#include "glm/vec2.hpp"
 
 #include "test.h"
 
@@ -11,6 +11,8 @@ using namespace std;
 int main()
 {
     Test a(1,2);
+
+    glm::vec2 v;
 
     if (!glfwInit())
         return -1;
