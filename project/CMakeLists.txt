@@ -13,7 +13,14 @@ SET(CMAKE_EXE_LINKER_FLAGS "-static")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(${TARGET} ${SRC}/main.cpp)
+set(HEADERS
+    ${SRC}/Application.h)
+
+set(SOURCES
+        ${SRC}/Application.cpp
+        ${SRC}/main.cpp)
+
+add_executable(${TARGET} ${HEADERS} ${SOURCES})
 
 #if(WIN32)
 #    target_link_options(${TARGET} PRIVATE -mwindows) #remove console and all "std::cout <<" debugging
