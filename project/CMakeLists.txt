@@ -15,6 +15,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(${TARGET} ${SRC}/main.cpp)
 
+#if(WIN32)
+#    target_link_options(${TARGET} PRIVATE -mwindows) #remove console and all "std::cout <<" debugging
+#endif()
 
 #----Modules----
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")

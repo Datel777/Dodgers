@@ -1,60 +1,53 @@
 #include <iostream>
 
-#define GLFW_INCLUDE_VULKAN
-#include "GLFW/glfw3.h"
-#include "glm/vec2.hpp"
+#include "GLFW.h"
+#include "Vulkan.h"
 
-#include "test.h"
+//using namespace std;
 
-using namespace std;
+#define DEBUG(a) std::cout << #a << " = " << a << std::endl
 
 int main()
 {
-    Test a(1,2);
+    try {
+        GLFW g;
+        Vulkan v("Dodgers test", VK_MAKE_VERSION(1, 0, 0));
+        Window w(400, 200, "Test");
 
-    glm::vec2 v;
+//        uint32_t extensionCount = 0;
+//        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+//        std::cout << extensionCount << " extensions supported" << std::endl;
+//
+//
+//        VkExtensionProperties properties[extensionCount];
+//        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, properties);
+//
+//        for(const VkExtensionProperties &p : properties)
+//            std::cout << p.extensionName << std::endl;
 
-    if (!glfwInit())
-        return -1;
+        uint32_t glfwExtensionCount = 0;
+        const char** glfwExtensions;
+        glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+//        createInfo.enabledExtensionCount = glfwExtensionCount;
+//        createInfo.ppEnabledExtensionNames = glfwExtensions;
 
-    VkInstanceCreateInfo info{}; //initialize with zeros
+        //NEED TO CHANGE CONCEPT OF CLASSES
 
-    VkInstance instance;
+        DEBUG(glfwExtensionCount);
+        for (int i=0; i<glfwExtensionCount; ++i)
+            DEBUG(glfwExtensions[i]);
 
-    if (vkCreateInstance(&info, nullptr, &instance) == VK_SUCCESS)
-    {
-        cout << "SUCCESS!!!" << endl;
-    } else {
-        cout << "SOMETHING GOES WRONG" << endl;
+        if (w.initialized())
+        {
+            g.setWindow(&w);
+
+            while(g.looping())
+                g.pollEvents();
+        }
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
     }
 
-    GLFWwindow* window;
-
-    /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
-    if (!window)
-    {
-        glfwTerminate();
-        return -1;
-    }
-
-    /* Make the window's context current */
-    glfwMakeContextCurrent(window);
-
-    /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
-    {
-        /* Render here */
-//        glClear(GL_COLOR_BUFFER_BIT);
-
-        /* Swap front and back buffers */
-//        glfwSwapBuffers(window);
-
-        /* Poll for and process events */
-//        glfwPollEvents();
-    }
-
-
-    glfwTerminate();
-    return 0;
+    return EXIT_SUCCESS;
 }
