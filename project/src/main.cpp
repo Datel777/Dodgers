@@ -10,8 +10,9 @@
 int main()
 {
     try {
-        Application application("Dodgers test", VK_MAKE_VERSION(1, 0, 0));
-        application.initWindow(800, 600, "Dodgers test");
+        Application application("Dodgers test", VK_MAKE_VERSION(1, 0, 0),
+                800, 600);
+        application.showWindow();
         application.mainloop();
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
