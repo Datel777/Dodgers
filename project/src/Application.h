@@ -40,6 +40,9 @@ private:
     VkInstance _instance;
     VkSurfaceKHR _surface;
     Device _device;
+    Swapchain _swapchain;
+    std::vector<VkImage> _swapChainImages;
+    ImageViewContainer _imageViewContainer;
 
     void initGLFW(int width, int height, const char* title);
     void initVulkan(const char *applicationName, uint32_t applicationVersion);

@@ -49,15 +49,12 @@ Device::Device(const PhysicalDevice &physicalDevice) :
 
 void Device::destroy()
 {
-    if (_swapChain != VK_NULL_HANDLE)
-        vkDestroySwapchainKHR(_vkDevice, _swapChain, nullptr);
-
     if (_vkDevice != VK_NULL_HANDLE)
         vkDestroyDevice(_vkDevice, nullptr);
 }
 
 
-void Device::createSwapChain(uint32_t width, uint32_t height, const VkSurfaceKHR &surface)
+Swapchain Device::createSwapChain(uint32_t width, uint32_t height, const VkSurfaceKHR &surface)
 {
     VkExtent2D extent = _physicalDevice.chooseSwapExtent(width, height);
 
@@ -93,6 +90,9 @@ void Device::createSwapChain(uint32_t width, uint32_t height, const VkSurfaceKHR
     createInfo.clipped = VK_TRUE; //if true, we do not care about pixels which (for example) under other window
     createInfo.oldSwapchain = VK_NULL_HANDLE; //need when window size changed, and need create new swap chain
 
-    if (vkCreateSwapchainKHR(_vkDevice, &createInfo, nullptr, &_swapChain) != VK_SUCCESS)
+    VkSwapchainKHR vkSwapChain;
+    if (vkCreateSwapchainKHR(_vkDevice, &createInfo, nullptr, &vkSwapChain) != VK_SUCCESS)
         throw std::runtime_error("Vulkan: failed to create swap chain!");
+
+    return Swapchain(_vkDevice, vkSwapChain, createInfo.minImageCount, createInfo.imageFormat, createInfo.imageExtent);
 }

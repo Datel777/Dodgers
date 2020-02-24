@@ -7,12 +7,15 @@ Application::Application(const char *applicationName, uint32_t version, int widt
     initVulkan(applicationName, version);
     createSurface();
     _device = Device(pickPhysicalDevice());
-    _device.createSwapChain(width, height, _surface);
+    _swapchain = _device.createSwapChain(width, height, _surface);
+    _imageViewContainer = _swapchain.createImageViews();
 }
 
 
 Application::~Application()
 {
+    _imageViewContainer.destroy();
+    _swapchain.destroy();
     _device.destroy();
 
 #ifndef NDEBUG
