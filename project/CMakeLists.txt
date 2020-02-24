@@ -14,10 +14,16 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(HEADERS
-    ${SRC}/Application.h)
+    ${SRC}/Commons.h
+    ${SRC}/Application.h
+    ${SRC}/PhysicalDevice.h
+    ${SRC}/Device.h)
 
 set(SOURCES
+        ${SRC}/Commons.cpp
         ${SRC}/Application.cpp
+        ${SRC}/PhysicalDevice.cpp
+        ${SRC}/Device.cpp
         ${SRC}/main.cpp)
 
 add_executable(${TARGET} ${HEADERS} ${SOURCES})

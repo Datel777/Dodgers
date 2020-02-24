@@ -1,28 +1,19 @@
 #include "Application.h"
 
-#ifndef NDEBUG
-const char* Application::_requiredLayers[] {
-        "VK_LAYER_KHRONOS_validation"
-};
-
-uint32_t Application::_requiredLayersCount = static_cast<uint32_t>(sizeOfArray(_requiredLayers));
-#endif
-
 
 Application::Application(const char *applicationName, uint32_t version, int width, int height)
 {
     initGLFW(width, height, applicationName);
     initVulkan(applicationName, version);
-    pickPhysicalDevice();
-    findQueueFamily(VK_QUEUE_GRAPHICS_BIT);
-    createDevice();
+    createSurface();
+    _device = Device(pickPhysicalDevice());
+    _device.createSwapChain(width, height, _surface);
 }
 
 
 Application::~Application()
 {
-    if (_device != VK_NULL_HANDLE)
-        vkDestroyDevice(_device, nullptr);
+    _device.destroy();
 
 #ifndef NDEBUG
     if (VULKAN_PFN_(vkDestroyDebugUtilsMessengerEXT))
@@ -36,12 +27,6 @@ Application::~Application()
         glfwDestroyWindow(_window);
 
     glfwTerminate();
-}
-
-
-void Application::showWindow()
-{
-    glfwShowWindow(_window);
 }
 
 
@@ -114,8 +99,8 @@ void Application::initVulkan(const char *applicationName, uint32_t applicationVe
     //add layers only in debug mode
 #ifndef NDEBUG
     //write required layers directly into instanceInfo
-    createInfo.enabledLayerCount = _requiredLayersCount;
-    createInfo.ppEnabledLayerNames = _requiredLayers;
+    createInfo.enabledLayerCount = Layers::count;
+    createInfo.ppEnabledLayerNames = Layers::required;
 
     getRequiredLayers(createInfo.enabledLayerCount, createInfo.ppEnabledLayerNames);
 
@@ -130,8 +115,6 @@ void Application::initVulkan(const char *applicationName, uint32_t applicationVe
 #ifndef NDEBUG
     setupDebugMessenger(&debugCreateInfo);
 #endif
-
-    createSurface();
 }
 
 
@@ -150,19 +133,21 @@ void Application::getRequiredExtensions(const uint32_t &count, const char* const
     bool notSupported;
     const char *extensionName;
 
+//    get all supported extensions names for debug
+//    for (const VkExtensionProperties &p : supportedExtensions)
+//        std::cout << p.extensionName << std::endl;
+
     for (int i=0; i<count; ++i)
     {
         notSupported = true;
         extensionName = names[i];
 
         for (const VkExtensionProperties &p : supportedExtensions)
-        {
             if (std::strcmp(extensionName, p.extensionName) == 0)
             {
                 notSupported = false;
                 break;
             }
-        }
 
         if (notSupported)
             notSupportedExtensionsNames.push_back(extensionName);
@@ -201,17 +186,15 @@ void Application::getRequiredLayers(const uint32_t &count, const char* const* &n
 
     for (int i=0; i<count; ++i)
     {
-        bool notSupported = true;
+        notSupported = true;
         layerName = names[i];
 
         for (const VkLayerProperties &p : availableLayers)
-        {
             if (strcmp(layerName, p.layerName) == 0)
             {
                 notSupported = false;
                 break;
             }
-        }
 
         if (notSupported)
             notSupportedLayersNames.push_back(layerName);
@@ -274,7 +257,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Application::debugCallback(
 #endif
 
 
-void Application::pickPhysicalDevice()
+PhysicalDevice Application::pickPhysicalDevice()
 {
     uint32_t deviceCount;
     vkEnumeratePhysicalDevices(_instance, &deviceCount, nullptr);
@@ -287,124 +270,32 @@ void Application::pickPhysicalDevice()
     vkEnumeratePhysicalDevices(_instance, &deviceCount, devices.data());
 
     //make list of devices sorted by rating to choose best suitable device
-    std::multimap<int, VkPhysicalDevice> ratedDevices;
-    int score;
+    std::multimap<int, PhysicalDevice> ratedDevices;
+    PhysicalDevice physicalDevice;
 
-    for (const VkPhysicalDevice& device : devices)
-        if (score = rateDeviceSuitability(device))
-            ratedDevices.insert({score, device});
+    for (const VkPhysicalDevice &device : devices)
+    {
+        physicalDevice = PhysicalDevice(device);
+
+        if (physicalDevice.type() == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
+                physicalDevice.features().geometryShader &&
+                physicalDevice.isSupportsExtensions() &&
+                physicalDevice.initQueueFamilies(_surface) &&
+                physicalDevice.querySwapChainSupport(_surface))
+            ratedDevices.insert({physicalDevice.getRating(), physicalDevice});
+    }
 
     //choosing the best one
-    if (ratedDevices.size() && (_physicalDevice = ratedDevices.rbegin()->second) != VK_NULL_HANDLE)
-        return;
+    if (ratedDevices.size())
+        return ratedDevices.rbegin()->second;
 
     throw std::runtime_error("Vulkan: failed to find a suitable GPU!");
 }
 
 
-int Application::rateDeviceSuitability(const VkPhysicalDevice &device)
-{
-    VkPhysicalDeviceProperties deviceProperties;
-    vkGetPhysicalDeviceProperties(device, &deviceProperties);
-
-    VkPhysicalDeviceFeatures deviceFeatures;
-    vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
-
-    if (!(deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader))
-        return 0;
-
-    // Maximum possible size of textures affects graphics quality
-    return deviceProperties.limits.maxImageDimension2D;
-}
-
-
-void Application::findQueueFamily(const VkQueueFlagBits &flags)
-{
-    uint32_t queueFamilyCount;
-    vkGetPhysicalDeviceQueueFamilyProperties(_physicalDevice, &queueFamilyCount, nullptr);
-
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(_physicalDevice, &queueFamilyCount, queueFamilies.data());
-
-    VkBool32 presentSupport;
-    bool graphicsFamilyNotFound = true,
-         presentFamilyNotFound = true;
-
-    //for now i'll try to choose random families
-    //but sometimes choosing same families could improve performance
-    for (uint32_t i = 0; i<queueFamilyCount && (graphicsFamilyNotFound || presentFamilyNotFound); ++i)
-    {
-        if (graphicsFamilyNotFound && isQueueFamilySuitable(queueFamilies[i], flags))
-        {
-            graphicsFamilyNotFound = false;
-            _graphicsFamily = i;
-        }
-
-        if (presentFamilyNotFound)
-        {
-            vkGetPhysicalDeviceSurfaceSupportKHR(_physicalDevice, i, _surface, &presentSupport);
-
-            if (presentSupport)
-            {
-                presentFamilyNotFound = false;
-                _presentFamily = i;
-            }
-        }
-    }
-
-    if (graphicsFamilyNotFound || presentFamilyNotFound)
-        throw std::runtime_error("Vulkan: failed to find a suitable queue!");
-}
-
-
-void Application::createDevice()
-{
-    //vector array of create infos for queues
-    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    //set of unique family indices
-    std::set<uint32_t> uniqueQueueFamilies{_graphicsFamily, _presentFamily};
-
-    float queuePriority = 1.0f;
-
-    for (uint32_t queueFamily : uniqueQueueFamilies)
-    {
-        VkDeviceQueueCreateInfo queueCreateInfo{};
-        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queueCreateInfo.queueFamilyIndex = queueFamily;
-        queueCreateInfo.queueCount = 1;
-        queueCreateInfo.pQueuePriorities = &queuePriority;
-        queueCreateInfos.push_back(queueCreateInfo);
-    }
-
-    //should save physical device features from "rateDeviceSuitability()" but maybe later
-    VkPhysicalDeviceFeatures deviceFeatures = {};
-
-    VkDeviceCreateInfo createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
-    createInfo.pQueueCreateInfos = queueCreateInfos.data();
-    createInfo.pEnabledFeatures = &deviceFeatures;
-
-    createInfo.enabledExtensionCount = 0;
-
-#ifndef NDEBUG
-    createInfo.enabledLayerCount = _requiredLayersCount;
-    createInfo.ppEnabledLayerNames = _requiredLayers;
-#endif
-
-    //create device
-    if (vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_device) != VK_SUCCESS)
-        throw std::runtime_error("Vulkan: failed to create logical device!");
-
-    //get queues handles
-    vkGetDeviceQueue(_device, _graphicsFamily, 0, &_graphicsQueue);
-    vkGetDeviceQueue(_device, _presentFamily, 0, &_presentQueue);
-}
-
-
 void Application::createSurface()
 {
-    if (glfwCreateWindowSurface(_instance, _window, nullptr, &_surface) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create window surface!");
-    }
+    if (glfwCreateWindowSurface(_instance, _window, nullptr, &_surface) != VK_SUCCESS)
+        throw std::runtime_error("Vulkan: failed to create window surface!");
 }
+

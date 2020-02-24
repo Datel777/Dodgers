@@ -11,7 +11,7 @@ int main()
 {
     try {
         Application application("Dodgers test", VK_MAKE_VERSION(1, 0, 0),
-                800, 600);
+            800, 600);
         application.showWindow();
         application.mainloop();
     } catch (const std::exception& e) {
