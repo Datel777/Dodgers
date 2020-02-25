@@ -96,3 +96,27 @@ Swapchain Device::createSwapChain(uint32_t width, uint32_t height, const VkSurfa
 
     return Swapchain(_vkDevice, vkSwapChain, createInfo.minImageCount, createInfo.imageFormat, createInfo.imageExtent);
 }
+
+#include "vulkan/vulkan.hpp"
+VkShaderModule Device::createShaderModule(const std::string& filename)
+{
+//    std::vector<char> content = readFile(filename);
+
+    //only content is matters here
+//    VkShaderModuleCreateInfo createInfo{
+//            VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+//            nullptr,
+//            0,
+//            content.size(),
+//            reinterpret_cast<const uint32_t*>(content.data())
+//    };
+
+    //i think this is best (or nice) solution to make it looks better
+    VkShaderModuleCreateInfo createInfo {VH::makeShaderModuleCreateInfo(readFile(filename))};
+    VkShaderModule shaderModule;
+
+    if (vkCreateShaderModule(_vkDevice, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
+        throw std::runtime_error("Vulkan: failed to create shader module!");
+
+    return shaderModule;
+}

@@ -14,12 +14,13 @@ public:
 
     void destroy();
 
-    inline const PhysicalDevice &physicalDevice() const       {return _physicalDevice;}
+    inline const PhysicalDevice &physicalDevice() const {return _physicalDevice;}
     inline const VkDevice &vkDevice() const             {return _vkDevice;}
     inline const VkQueue &graphicsQueue() const         {return _graphicsQueue;}
     inline const VkQueue &presentQueue() const          {return _presentQueue;}
 
     Swapchain createSwapChain(uint32_t width, uint32_t height, const VkSurfaceKHR &surface);
+    VkShaderModule createShaderModule(const std::string& filename);
 
 private:
     PhysicalDevice _physicalDevice;

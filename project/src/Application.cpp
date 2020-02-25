@@ -9,14 +9,30 @@ Application::Application(const char *applicationName, uint32_t version, int widt
     _device = Device(pickPhysicalDevice());
     _swapchain = _device.createSwapChain(width, height, _surface);
     _imageViewContainer = _swapchain.createImageViews();
+    _shaderModuleVertex = _device.createShaderModule("../shaders/vert.spv");
+    _shaderModuleFragment = _device.createShaderModule("../shaders/frag.spv");
+
+    //very rough solution, better to use list of abstract modules (or something like that) in future
+    _pipelineLayout = _swapchain.createGraphicsPipelineLayout(_shaderModuleVertex, _shaderModuleFragment);
 }
 
 
 Application::~Application()
 {
+    //should create classes for this
+    if (_pipelineLayout != VK_NULL_HANDLE)
+        vkDestroyPipelineLayout(_device.vkDevice(), _pipelineLayout, nullptr);
+
+    if (_shaderModuleFragment != VK_NULL_HANDLE)
+        vkDestroyShaderModule(_device.vkDevice(), _shaderModuleFragment, nullptr);
+    if (_shaderModuleVertex != VK_NULL_HANDLE)
+        vkDestroyShaderModule(_device.vkDevice(), _shaderModuleVertex, nullptr);
+
     _imageViewContainer.destroy();
     _swapchain.destroy();
     _device.destroy();
+
+
 
 #ifndef NDEBUG
     if (VULKAN_PFN_(vkDestroyDebugUtilsMessengerEXT))

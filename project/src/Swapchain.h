@@ -24,6 +24,8 @@ public:
 
     ImageViewContainer createImageViews();
 
+    VkPipelineLayout createGraphicsPipelineLayout(const VkShaderModule &shaderModuleVertex, const VkShaderModule &shaderModuleFragment);
+
 private:
     VkDevice _vkDevice = VK_NULL_HANDLE;
     VkSwapchainKHR _vkSwapchain = VK_NULL_HANDLE;

@@ -43,6 +43,9 @@ private:
     Swapchain _swapchain;
     std::vector<VkImage> _swapChainImages;
     ImageViewContainer _imageViewContainer;
+    VkShaderModule _shaderModuleVertex = VK_NULL_HANDLE;
+    VkShaderModule _shaderModuleFragment = VK_NULL_HANDLE;
+    VkPipelineLayout _pipelineLayout = VK_NULL_HANDLE;
 
     void initGLFW(int width, int height, const char* title);
     void initVulkan(const char *applicationName, uint32_t applicationVersion);
@@ -51,6 +54,7 @@ private:
     PhysicalDevice pickPhysicalDevice();
 
     void createSurface();
+
 
 #ifndef NDEBUG
     VkDebugUtilsMessengerEXT _debugMessenger;
@@ -65,4 +69,5 @@ private:
             const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
             void* pUserData);
 #endif
+
 };

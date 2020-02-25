@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include "Commons.h"
+#include "VulkanHelper.h"
 
 
 class PhysicalDevice

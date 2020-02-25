@@ -15,6 +15,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(HEADERS
         ${SRC}/Commons.h
+        ${SRC}/VulkanHelper.h
         ${SRC}/Application.h
         ${SRC}/PhysicalDevice.h
         ${SRC}/Device.h
