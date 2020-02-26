@@ -43,9 +43,12 @@ private:
     Swapchain _swapchain;
     std::vector<VkImage> _swapChainImages;
     ImageViewContainer _imageViewContainer;
-    VkShaderModule _shaderModuleVertex = VK_NULL_HANDLE;
-    VkShaderModule _shaderModuleFragment = VK_NULL_HANDLE;
-    VkPipelineLayout _pipelineLayout = VK_NULL_HANDLE;
+//    VkShaderModule _shaderModuleVertex = VK_NULL_HANDLE;
+//    VkShaderModule _shaderModuleFragment = VK_NULL_HANDLE;
+//    VkPipelineLayout _pipelineLayout = VK_NULL_HANDLE;
+//    VkRenderPass _renderPass = VK_NULL_HANDLE;
+
+    VkPipeline _pipeline = VK_NULL_HANDLE;
 
     void initGLFW(int width, int height, const char* title);
     void initVulkan(const char *applicationName, uint32_t applicationVersion);

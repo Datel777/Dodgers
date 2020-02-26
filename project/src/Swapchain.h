@@ -5,6 +5,8 @@
 #include "vulkan/vulkan.h"
 
 #include "ImageViewContainer.h"
+#include "Commons.h"
+#include "VulkanHelper.h"
 
 
 class Swapchain
@@ -23,8 +25,7 @@ public:
 //    inline const VkSwapchainKHR &vkSwapchain() const      {return _vkSwapchain;}
 
     ImageViewContainer createImageViews();
-
-    VkPipelineLayout createGraphicsPipelineLayout(const VkShaderModule &shaderModuleVertex, const VkShaderModule &shaderModuleFragment);
+    VkPipeline createGraphicsPipeline();
 
 private:
     VkDevice _vkDevice = VK_NULL_HANDLE;
@@ -33,4 +34,9 @@ private:
     uint32_t _imageCount;
     VkFormat _format;
     VkExtent2D _extent;
+
+
+    VkShaderModule createShaderModule(const std::string& filename); //this function could be in Device.h
+    VkPipelineLayout createGraphicsPipelineLayout();
+    VkRenderPass createRenderPass();
 };

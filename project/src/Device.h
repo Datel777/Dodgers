@@ -20,7 +20,6 @@ public:
     inline const VkQueue &presentQueue() const          {return _presentQueue;}
 
     Swapchain createSwapChain(uint32_t width, uint32_t height, const VkSurfaceKHR &surface);
-    VkShaderModule createShaderModule(const std::string& filename);
 
 private:
     PhysicalDevice _physicalDevice;

@@ -9,30 +9,30 @@ Application::Application(const char *applicationName, uint32_t version, int widt
     _device = Device(pickPhysicalDevice());
     _swapchain = _device.createSwapChain(width, height, _surface);
     _imageViewContainer = _swapchain.createImageViews();
-    _shaderModuleVertex = _device.createShaderModule("../shaders/vert.spv");
-    _shaderModuleFragment = _device.createShaderModule("../shaders/frag.spv");
-
-    //very rough solution, better to use list of abstract modules (or something like that) in future
-    _pipelineLayout = _swapchain.createGraphicsPipelineLayout(_shaderModuleVertex, _shaderModuleFragment);
+    _pipeline = _swapchain.createGraphicsPipeline();
 }
 
 
 Application::~Application()
 {
-    //should create classes for this
-    if (_pipelineLayout != VK_NULL_HANDLE)
-        vkDestroyPipelineLayout(_device.vkDevice(), _pipelineLayout, nullptr);
+    if (_pipeline != VK_NULL_HANDLE)
+        vkDestroyPipeline(_device.vkDevice(), _pipeline, nullptr);
 
-    if (_shaderModuleFragment != VK_NULL_HANDLE)
-        vkDestroyShaderModule(_device.vkDevice(), _shaderModuleFragment, nullptr);
-    if (_shaderModuleVertex != VK_NULL_HANDLE)
-        vkDestroyShaderModule(_device.vkDevice(), _shaderModuleVertex, nullptr);
+    //should create classes for this
+//    if (_pipelineLayout != VK_NULL_HANDLE)
+//        vkDestroyPipelineLayout(_device.vkDevice(), _pipelineLayout, nullptr);
+//
+//    if (_renderPass != VK_NULL_HANDLE)
+//        vkDestroyRenderPass(_device.vkDevice(), _renderPass, nullptr);
+//
+//    if (_shaderModuleFragment != VK_NULL_HANDLE)
+//        vkDestroyShaderModule(_device.vkDevice(), _shaderModuleFragment, nullptr);
+//    if (_shaderModuleVertex != VK_NULL_HANDLE)
+//        vkDestroyShaderModule(_device.vkDevice(), _shaderModuleVertex, nullptr);
 
     _imageViewContainer.destroy();
     _swapchain.destroy();
     _device.destroy();
-
-
 
 #ifndef NDEBUG
     if (VULKAN_PFN_(vkDestroyDebugUtilsMessengerEXT))
@@ -79,15 +79,7 @@ void Application::initGLFW(int width, int height, const char* title)
 
 void Application::initVulkan(const char *applicationName, uint32_t applicationVersion)
 {
-    VkApplicationInfo appInfo{
-            VK_STRUCTURE_TYPE_APPLICATION_INFO,
-            nullptr,
-            applicationName,
-            applicationVersion,
-            "No Engine",
-            VK_MAKE_VERSION(1, 0, 0),
-            VK_API_VERSION_1_0
-    };
+    VkApplicationInfo appInfo {VH::makeApplicationInfo(applicationName, applicationVersion)};
 
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;

@@ -36,23 +36,103 @@ ImageViewContainer Swapchain::createImageViews()
 }
 
 
-VkPipelineLayout Swapchain::createGraphicsPipelineLayout(const VkShaderModule &shaderModuleVertex, const VkShaderModule &shaderModuleFragment)
+VkShaderModule Swapchain::createShaderModule(const std::string& filename)
+{
+    //need to store data before calling vkCreateShaderModule
+    //putting readFile(filename) inside makeShaderModuleCreateInfo was bad idean
+    std::vector<char> shaderFileContent = readFile(filename);
+
+    //i think this is best (or nice) solution to make it looks better
+    VkShaderModuleCreateInfo createInfo {VH::makeShaderModuleCreateInfo(shaderFileContent)};
+    VkShaderModule shaderModule;
+
+    if (vkCreateShaderModule(_vkDevice, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
+        throw std::runtime_error("Vulkan: failed to create shader module!");
+
+    return shaderModule;
+}
+
+
+VkPipelineLayout Swapchain::createGraphicsPipelineLayout()
+{
+    //pipeline layout for uniform values in shaders
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.setLayoutCount = 0; // Optional
+    pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
+    pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
+    pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+
+    VkPipelineLayout pipelineLayout;
+
+    if (vkCreatePipelineLayout(_vkDevice, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+        throw std::runtime_error("Vulkan: failed to create pipeline layout!");
+
+    return pipelineLayout;
+}
+
+
+VkRenderPass Swapchain::createRenderPass()
+{
+    VkAttachmentDescription colorAttachment{
+            0,
+            _format,
+            VK_SAMPLE_COUNT_1_BIT,
+            VK_ATTACHMENT_LOAD_OP_CLEAR,
+            VK_ATTACHMENT_STORE_OP_STORE,
+            VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+    };
+
+    VkAttachmentReference colorAttachmentRef{
+            0,
+            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+    };
+
+    VkSubpassDescription subpass{};
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &colorAttachmentRef;
+
+    VkRenderPassCreateInfo renderPassInfo{
+            VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+            nullptr,
+            0,
+            1,
+            &colorAttachment,
+            1,
+            &subpass,
+            0,
+            nullptr
+    };
+
+    VkRenderPass renderPass;
+    if (vkCreateRenderPass(_vkDevice, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
+        throw std::runtime_error("Vulkan: failed to create render pass!");
+
+    return renderPass;
+}
+
+
+VkPipeline Swapchain::createGraphicsPipeline()
 {
     //creating vertex shader stage
     VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
     vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vertShaderStageInfo.module = shaderModuleVertex;
+    vertShaderStageInfo.module = createShaderModule("../shaders/vert.spv");
     vertShaderStageInfo.pName = "main";
 
     //creating fragment shader stage
     VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
     fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    fragShaderStageInfo.module = shaderModuleFragment;
+    fragShaderStageInfo.module = createShaderModule("../shaders/frag.spv");
     fragShaderStageInfo.pName = "main";
 
-//    VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+    VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
     //vertex input
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
@@ -140,27 +220,40 @@ VkPipelineLayout Swapchain::createGraphicsPipelineLayout(const VkShaderModule &s
     colorBlending.blendConstants[3] = 0.0f; // Optional
 
     //dynamic state useful to do not recreate pipeline if some variables changed
-    VkDynamicState dynamicStates[] {
-            VK_DYNAMIC_STATE_VIEWPORT,
-            VK_DYNAMIC_STATE_LINE_WIDTH};
+    //need in future
+//    VkDynamicState dynamicStates[] {
+//            VK_DYNAMIC_STATE_VIEWPORT,
+//            VK_DYNAMIC_STATE_LINE_WIDTH};
+//
+//    VkPipelineDynamicStateCreateInfo dynamicState{};
+//    dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+//    dynamicState.dynamicStateCount = 2;
+//    dynamicState.pDynamicStates = dynamicStates;
 
-    VkPipelineDynamicStateCreateInfo dynamicState{};
-    dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynamicState.dynamicStateCount = 2;
-    dynamicState.pDynamicStates = dynamicStates;
 
-    //pipeline layout for uniform values in shaders
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 0; // Optional
-    pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
-    pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-    pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+    //pipeline main create info
+    VkGraphicsPipelineCreateInfo pipelineInfo{};
+    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipelineInfo.stageCount = 2;
+    pipelineInfo.pStages = shaderStages;
+    pipelineInfo.pVertexInputState = &vertexInputInfo;
+    pipelineInfo.pInputAssemblyState = &inputAssembly;
+    pipelineInfo.pViewportState = &viewportState;
+    pipelineInfo.pRasterizationState = &rasterizer;
+    pipelineInfo.pMultisampleState = &multisampling;
+    pipelineInfo.pDepthStencilState = nullptr; // Optional
+    pipelineInfo.pColorBlendState = &colorBlending;
 
-    VkPipelineLayout pipelineLayout;
+    pipelineInfo.pDynamicState = nullptr; // Optional
+    pipelineInfo.layout = createGraphicsPipelineLayout();
+    pipelineInfo.renderPass = createRenderPass();
+    pipelineInfo.subpass = 0;
+    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
+    pipelineInfo.basePipelineIndex = -1; // Optional
 
-    if (vkCreatePipelineLayout(_vkDevice, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
-        throw std::runtime_error("Vulkan: failed to create pipeline layout!");
+    VkPipeline graphicsPipeline;
+    if (vkCreateGraphicsPipelines(_vkDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
+        throw std::runtime_error("Vulkan: failed to create graphics pipeline!");
 
-    return pipelineLayout;
+    return graphicsPipeline;
 }
