@@ -14,23 +14,33 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(HEADERS
+        ${SRC}/Core.h
         ${SRC}/Commons.h
         ${SRC}/VulkanHelper.h
         ${SRC}/RecursiveDestroyer.h
         ${SRC}/Application.h
+        ${SRC}/Window.h
+        ${SRC}/Surface.h
         ${SRC}/PhysicalDevice.h
         ${SRC}/Device.h
+        ${SRC}/Queue.h
         ${SRC}/Swapchain.h
         ${SRC}/ImageViewContainer.h
+        ${SRC}/MyApplication.h
         )
 
 set(SOURCES
+        ${SRC}/Core.cpp
         ${SRC}/Commons.cpp
         ${SRC}/Application.cpp
+        ${SRC}/Window.cpp
+        ${SRC}/Surface.cpp
         ${SRC}/PhysicalDevice.cpp
         ${SRC}/Device.cpp
+        ${SRC}/Queue.cpp
         ${SRC}/Swapchain.cpp
         ${SRC}/ImageViewContainer.cpp
+        ${SRC}/MyApplication.cpp
         ${SRC}/main.cpp)
 
 add_executable(${TARGET} ${HEADERS} ${SOURCES})

@@ -7,36 +7,27 @@
 #include <map>
 //#include <optional>
 
+#include "Core.h"
+#include "RecursiveDestroyer.h"
 
-#define GLFW_INCLUDE_VULKAN
-#include "GLFW/glfw3.h"
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-
-
+#include "Window.h"
 #include "Device.h"
 
 
-class Application
+class Application : public RecursiveDestroyer
 {
-//    struct QueueFamilyIndices {
-//        std::optional<uint32_t> graphicsFamily;
-//        std::optional<uint32_t> presentFamily;
-//
-//        inline bool isComplete() const  {return graphicsFamily.has_value() && presentFamily.has_value();}
-//    };
-
 public:
-    Application(const char *applicationName, uint32_t version, int width, int height);
+    Window *createWindow(int width, int height, const char* title, const std::initializer_list<std::pair<int,int>> &hints = {});
+
+/*
+public:
+    Application();
     ~Application();
 
-    inline void showWindow() const  {glfwShowWindow(_window);}
-
-    void mainloop();
+    virtual constexpr void mainloop() = 0;
 
 private:
-    GLFWwindow* _window = nullptr;
+//    GLFWwindow* _window = nullptr;
     VkInstance _instance;
     VkSurfaceKHR _surface;
     Device _device;
@@ -52,25 +43,10 @@ private:
 
     void initGLFW(int width, int height, const char* title);
     void initVulkan(const char *applicationName, uint32_t applicationVersion);
-    void getRequiredExtensions(const uint32_t &count, const char* const* names);
+
 
     PhysicalDevice pickPhysicalDevice();
 
     void createSurface();
-
-
-#ifndef NDEBUG
-    VkDebugUtilsMessengerEXT _debugMessenger;
-
-    void getRequiredLayers(const uint32_t &count, const char* const* &names);
-    void setupDebugMessenger(const VkDebugUtilsMessengerCreateInfoEXT *debugCreateInfo);
-    VkDebugUtilsMessengerCreateInfoEXT createDebugInfo();
-
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-            VkDebugUtilsMessageTypeFlagsEXT messageType,
-            const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-            void* pUserData);
-#endif
-
+*/
 };

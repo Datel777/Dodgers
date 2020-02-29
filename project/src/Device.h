@@ -6,7 +6,7 @@
 #include "SwapChain.h"
 
 
-class Device
+class Device : public RecursiveDestroyer
 {
 public:
     Device() {}

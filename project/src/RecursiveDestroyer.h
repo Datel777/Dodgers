@@ -1,23 +1,40 @@
 #pragma once
 
+#include <stdexcept>
+#include <forward_list>
+
+#include "Commons.h"
+
 
 class RecursiveDestroyer
 {
 public:
-    virtual void destroy() = 0;
+    virtual ~RecursiveDestroyer()
+    {
+        for (RecursiveDestroyer *child : _children) {
+            child->_parent = nullptr; //prevent removing from list if parent is deleting
+            delete child;
+        }
+
+        if (_parent)
+            _parent->removeFromDestroy(this);
+    }
 
 protected:
-    inline void addToDestroy(RecursiveDestroyer *target)
+    inline RecursiveDestroyer* addToDestroy(RecursiveDestroyer *target)
     {
-        //list push_front target
+        if (target->_parent)
+            throw std::runtime_error("RecursiveDestroyer: addToDestroy: parent is not null");
+
+        target->_parent = this;
+        _children.push_front(target);
+
+        return target;
     }
 
-    inline void recursiveDestroy()
-    {
-        //call recursiveDestroy() for every element of list
+    inline void removeFromDestroy(RecursiveDestroyer *target)   {_children.remove(target);}
 
-        destroy();
-    }
 private:
-    //list of RecursiveDestroyer*
+    RecursiveDestroyer *_parent = nullptr; //if nullptr, do not need to call removeFromDestroy
+    std::forward_list<RecursiveDestroyer*> _children;
 };

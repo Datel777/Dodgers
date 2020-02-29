@@ -30,6 +30,8 @@ Device::Device(const PhysicalDevice &physicalDevice) :
 //    createInfo.pEnabledFeatures = &deviceFeatures;
     //or maybe
     createInfo.pEnabledFeatures = &physicalDevice.features();
+
+    /*
     createInfo.enabledExtensionCount = DeviceExtensions::count;
     createInfo.ppEnabledExtensionNames = DeviceExtensions::required;
 
@@ -37,6 +39,7 @@ Device::Device(const PhysicalDevice &physicalDevice) :
     createInfo.enabledLayerCount = Layers::count;
     createInfo.ppEnabledLayerNames = Layers::required;
 #endif
+    */
 
     if (vkCreateDevice(physicalDevice.vkPhysicalDevice(), &createInfo, nullptr, &_vkDevice) != VK_SUCCESS)
         throw std::runtime_error("Vulkan: failed to create logical device!");
